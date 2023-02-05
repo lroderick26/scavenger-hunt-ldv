@@ -10,7 +10,7 @@ import email
 from googleapiclient import errors
 
 # Set working path
-if os.getcwd() == 'C:\\Users\\Laurie\\Documents\\GitHub\\lesbian-visibility-day\\scripts':
+if os.getcwd() == 'C:\\Users\\Laurie\\Documents\\GitHub\\lvd\\scripts':
     print("Working directory already set to gmail_read")
 else:
     os.chdir('C:\\Users\\Laurie\\Documents\\GitHub\\gmail_read')
