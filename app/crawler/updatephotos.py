@@ -4,7 +4,8 @@ import requests
 from google.cloud import storage
 
 # Instantiates a client
-storage_client = storage.Client.from_service_account_json("/creds/lgbt-tv-data-f74cabb1c8e1.json")
+# storage_client = storage.Client.from_service_account_json("/creds/lgbt-tv-data-f74cabb1c8e1.json")
+storage_client = storage.Client.from_service_account_json("/creds/lgbt-tv-data-cc289e1b9b34.json")
 
 # The name for the top level bucket
 bucket_name = "public-materials"

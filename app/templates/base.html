@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    {% block head %}
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="https://www.samsung.com/us/smg/etc/designs/samsung/global/favicon.ico">
+
+    <title>{% block title %}{% endblock %} - Art Store Search</title>
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" type="text/css" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+
+
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <link href="{{ url_for('css', path='ie10-viewport-bug-workaround.css')}}" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="{{ url_for('css', path='navbar.css')}}" rel="stylesheet">
+     <link href="{{ url_for('css', path='album.css')}}" rel="stylesheet">
+     <link href="{{ url_for('css', path='holder.min.js')}}" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+    <![endif]-->
+    {% endblock %}
+  </head>
+  <body>
+<div id="content">
+    <div class="container">
+
+        <!-- Static navbar -->
+        <nav class="navbar navbar-default">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                      <span class="sr-only">Toggle navigation</span>
+                      <span class="icon-bar"></span>
+                      <span class="icon-bar"></span>
+                      <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="/home">Lesbian Day of Visiblity</a>
+                </div>
+                </div><!--/.nav-collapse -->
+            </div><!--/.container-fluid -->
+        </nav>
+    </div> <!-- /container -->
+    {% block content %}{% endblock %}
+    </div>
+    <div id="footer">
+        {% block footer %}
+         <!-- Bootstrap core JavaScript
+        ================================================== -->
+        <!-- Placed at the end of the document so the pages load faster -->
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+        <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+         <script src="{{ url_for('css', path='/holder.min.js') }}"></script>
+         <script src="{{ url_for('css', path='/popper.min.js') }}"></script>
+        <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+        <script src="{{ url_for('css', path='/ie10-viewport-bug-workaround.js') }}"></script>
+        {% endblock %}
+    </div>
+</body>
+</html>
