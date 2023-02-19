@@ -29,6 +29,20 @@
 
 footer {
   padding-top: 3rem;
+.thumbnail{
+    width: 500px;
+    // or you could use percentage values for responsive layout
+    // width : 100%;
+    height: auto;
+    overflow: auto;
+}
+
+.thumbnail img{
+    // your styles for the image
+    width: 100%;
+    height: auto;
+    display: block;
+}
   padding-bottom: 3rem;
 }
 

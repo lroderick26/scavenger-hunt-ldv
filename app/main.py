@@ -19,9 +19,9 @@ app.mount("/css", StaticFiles(directory="app/static/css"), name="css")
 templates = Jinja2Templates(directory="app/templates")
 
 # Instantiate the gcs client
-# GOOGLE_STORAGE_CLIENT = storage.Client.from_service_account_json("/app/creds/lgbt-tv-data-f74cabb1c8e1.json")
+GOOGLE_STORAGE_CLIENT = storage.Client.from_service_account_json("/app/creds/lgbt-tv-data-f74cabb1c8e1.json")
 # GOOGLE_STORAGE_CLIENT = storage.Client.from_service_account_json("/Users/l.roderick/Documents/GitHub/lvd/app/creds/lgbt-tv-data-cc289e1b9b34.json")
-GOOGLE_STORAGE_CLIENT = storage.Client.from_service_account_json("/app/creds/lgbt-tv-data-cc289e1b9b34.json")
+# GOOGLE_STORAGE_CLIENT = storage.Client.from_service_account_json("/app/creds/lgbt-tv-data-cc289e1b9b34.json")
 
 def list_blobs_with_prefix(bucket_name, prefix=None, delimiter=None):
     """Lists all the blobs in the bucket that begin with the prefix. """
@@ -39,41 +39,58 @@ def list_blobs_with_prefix(bucket_name, prefix=None, delimiter=None):
 
 
 def get_work():
-    bucket_name = "public-materials"
-    items = list_blobs_with_prefix(bucket_name, delimiter=None)
+    bucket_name = "lesbian-visibility-day"
+    items = list_blobs_with_prefix(bucket_name, prefix="public-materials", delimiter=None)
     master_list = []
     for item in items:
         path_quoted = urllib.parse.quote(item, safe='/', encoding='utf-8')
         item_name_w_extension = item.split('/')[-1]
         item_name = item_name_w_extension.split('.')[0]
         quoted = urllib.parse.quote(item_name_w_extension, safe='/', encoding='utf-8')
-        url = f"https://storage.googleapis.com/public-materials/{path_quoted}"
+        url = f"https://storage.googleapis.com/lesbian-visibility-day/{path_quoted}"
         hash_id = hashlib.md5((item_name + url).encode('utf-8')).hexdigest()
         master_list.append({"item_name": item_name, "url": url, "hash_id": hash_id})
     return master_list
 
+
+def divide_chunks(l, n):
+    # looping till length l
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
+
+
 def split_into_columns_and_rows():
     photos = get_work()
     split_by_4 = len(photos) // 4
+    print("Length of group: " + str(split_by_4))
+    split_photos = list(divide_chunks(photos, 4))
+    return split_photos
 
 
 @app.post("/upload")
 def upload(file: UploadFile = File(...)):
     try:
         contents = file.file.read()
-        with open("uploaded_" + file.filename, "wb") as f:
+        with open("/app/photos/uploaded_" + file.filename, "wb") as f:
             f.write(contents)
     except Exception:
         return {"message": "There was an error uploading the file"}
     finally:
         file.file.close()
-
-    return {"message": f"Successfuly uploaded {file.filename}"}
+        try:
+            bucket = GOOGLE_STORAGE_CLIENT.get_bucket('lesbian-visibility-day')
+            blob = bucket.blob("public-materials/" + "uploaded_" + file.filename)
+            blob.upload_from_filename("/app/photos/uploaded_" + file.filename)
+        except Exception:
+            return {"message": "There was an error uploading the file to Google Storage"}
+    return {"message": f"Successfully uploaded {file.filename}"}
 
 
 @app.get("/", response_class=HTMLResponse)
-def read_root(request: Request,  current_work: list = Depends(get_work)):
-    return templates.TemplateResponse("index.html", {"request": request, "current_work": current_work})
+def read_root(request: Request,
+              current_work: list = Depends(get_work),
+              split_photos: list = Depends(split_into_columns_and_rows)):
+    return templates.TemplateResponse("index.html", {"request": request, "current_work": current_work, "split_photos": split_photos})
 
 @app.get("/items/{id}", response_class=HTMLResponse)
 async def read_item(request: Request, id: str, current_work: list = Depends(get_work)):
@@ -81,3 +98,8 @@ async def read_item(request: Request, id: str, current_work: list = Depends(get_
         if row['hash_id'] == id:
             item = row
     return templates.TemplateResponse("item.html", {"request": request, "item": item})
+
+
+@app.get("/uploadFile", response_class=HTMLResponse)
+async def upload_file(request: Request):
+    return templates.TemplateResponse("upload.html", {"request": request})

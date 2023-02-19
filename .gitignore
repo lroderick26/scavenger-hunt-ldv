@@ -3,3 +3,5 @@
 /scripts/token.pickle
 
 .env
+
+/app/__pycache__
