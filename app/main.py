@@ -12,6 +12,11 @@ import urllib.parse
 import hashlib
 import base64
 from email.mime.text import MIMEText
+import csv
+import json
+import random
+import pandas as pd
+import numpy as np
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -20,8 +25,7 @@ templates = Jinja2Templates(directory="app/templates")
 
 # Instantiate the gcs client
 GOOGLE_STORAGE_CLIENT = storage.Client.from_service_account_json("/app/creds/lgbt-tv-data-f74cabb1c8e1.json")
-# GOOGLE_STORAGE_CLIENT = storage.Client.from_service_account_json("/Users/l.roderick/Documents/GitHub/lvd/app/creds/lgbt-tv-data-cc289e1b9b34.json")
-# GOOGLE_STORAGE_CLIENT = storage.Client.from_service_account_json("/app/creds/lgbt-tv-data-cc289e1b9b34.json")
+
 
 def list_blobs_with_prefix(bucket_name, prefix=None, delimiter=None):
     """Lists all the blobs in the bucket that begin with the prefix. """
@@ -67,11 +71,82 @@ def split_into_columns_and_rows():
     return split_photos
 
 
+def load_categories():
+    filename = '/app/lib/categories.csv'
+    prompts = list()
+    with open(filename, encoding = 'utf-8') as csvfile:
+        csvreader = csv.DictReader(csvfile)
+        for row in csvreader:
+            prompts.append({"id": row['\ufeffcategory_id'], "category": row['category'], "prompt": row['prompt'], "short_prompt": row['short_prompt'], "points": int(row['points']), "answer": row['answer']})
+    return prompts
+
+
+def calculate_points(points_allocation):
+    df = pd.DataFrame.from_records(points_allocation)
+    pivot_df = pd.pivot_table(df, values='points', index=['name'], aggfunc=np.sum, fill_value=0)
+    points_by_user = pivot_df.reset_index().to_json(orient='records')
+    points_by_user = json.loads(points_by_user)
+    list_of_images = ["/images/edie.jpg", "/images/ellen.jpg", "/images/lena.jpg", "/images/sappho.jpg", "/images/subaru.png"]
+    for i in range(len(points_by_user)):
+        points_by_user[i]['image_url'] = list_of_images[random.randint(0,4)]
+    points_by_user.sort(key=lambda x: x['points'], reverse=True)
+    # # testing
+    # points_by_user = [
+    #     {"name": "e.windsor", "image_url": "/images/edie.jpg","points": 10},
+    #     {"name": "e.degeneres", "image_url": "/images/ellen.jpg","points": 12},
+    #     {"name": "l.waithe", "image_url": "/images/lena.jpg","points": 15},
+    #     {"name": "sappho", "image_url": "/images/sappho.jpg","points": 6},
+    #     {"name": "s.ubaru", "image_url": "/images/subaru.png","points": 5}]
+    # points_by_user.sort(key=lambda x: x['points'], reverse=True)
+    return points_by_user
+
+def get_leaderboard():
+    master_list = get_work()
+    prompts = load_categories()
+    points_allocation = list()
+    for row in master_list:
+        item_name = row['item_name']
+        split_up_name = item_name.split('_')
+        prompt_no = split_up_name[0]
+        user_name = split_up_name[1]
+        points = int([x['points'] for x in prompts if x['id'] == prompt_no][0])
+        points_allocation.append({"name": user_name, "points": points, "prompt": prompt_no})
+    points_calculated = calculate_points(points_allocation)
+    return points_calculated
+
+def order_items_by_prompt():
+    master_list = get_work()
+    prompts = load_categories()
+    ordered_prompts = list()
+    for row in master_list:
+        item_name = row['item_name']
+        split_up_name = item_name.split('_')
+        prompt_no = split_up_name[0]
+        user_name = split_up_name[1]
+        points = int([x['points'] for x in prompts if x['id'] == prompt_no][0])
+        try:
+            ordered_prompts[prompt_no].append(row['url'])
+        except:
+            ordered_prompts[prompt_no] = [row['url']]
+    return ordered_prompts
+
+# json_table = [{"name": "user_name", "points": 2, "prompt": 1},
+# {"name": "l.roderick", "points": 2, "prompt": 1},
+# {"name":  "user_name", "points": 3, "prompt": 2},
+# {"name":  "user_name", "points": 4, "prompt": 3},
+# {"name":  "l.roderick", "points": 5, "prompt": 2},
+# {"name":  "l.roderick", "points": 6, "prompt": 3},
+# {"name":  "l.roderick", "points": 2, "prompt": 4},
+# {"name": "user_name", "points": 3, "prompt": 5},
+# {"name": "user_name", "points": 4, "prompt": 1}]
+
+
+
 @app.post("/upload")
 def upload(file: UploadFile = File(...)):
     try:
         contents = file.file.read()
-        with open("/app/photos/uploaded_" + file.filename, "wb") as f:
+        with open("/app/photos/" + file.filename, "wb") as f:
             f.write(contents)
     except Exception:
         return {"message": "There was an error uploading the file"}
@@ -79,18 +154,26 @@ def upload(file: UploadFile = File(...)):
         file.file.close()
         try:
             bucket = GOOGLE_STORAGE_CLIENT.get_bucket('lesbian-visibility-day')
-            blob = bucket.blob("public-materials/" + "uploaded_" + file.filename)
-            blob.upload_from_filename("/app/photos/uploaded_" + file.filename)
-        except Exception:
-            return {"message": "There was an error uploading the file to Google Storage"}
+            blob = bucket.blob("public-materials/" + file.filename)
+            blob.upload_from_filename("/app/photos/" + file.filename)
+        except Exception as err:
+            return {"message": "There was an error uploading the file to Google Storage: %s"%(err)}
     return {"message": f"Successfully uploaded {file.filename}"}
 
 
 @app.get("/", response_class=HTMLResponse)
 def read_root(request: Request,
               current_work: list = Depends(get_work),
-              split_photos: list = Depends(split_into_columns_and_rows)):
-    return templates.TemplateResponse("index.html", {"request": request, "current_work": current_work, "split_photos": split_photos})
+              split_photos: list = Depends(split_into_columns_and_rows),
+              prompts: list = Depends(load_categories),
+              leaderboard: list = Depends(get_leaderboard),
+              split_photos_by_prompt: list = Depends(order_items_by_prompt)):
+    return templates.TemplateResponse("index.html", {"request": request,
+                                                     "current_work": current_work,
+                                                     "split_photos": split_photos,
+                                                     "prompts": prompts,
+                                                     "leaderboard": leaderboard,
+                                                     "split_photos_by_prompt": split_photos_by_prompt})
 
 @app.get("/items/{id}", response_class=HTMLResponse)
 async def read_item(request: Request, id: str, current_work: list = Depends(get_work)):
@@ -101,5 +184,13 @@ async def read_item(request: Request, id: str, current_work: list = Depends(get_
 
 
 @app.get("/uploadFile", response_class=HTMLResponse)
-async def upload_file(request: Request):
-    return templates.TemplateResponse("upload.html", {"request": request})
+async def upload_file(request: Request,
+                      prompts: list = Depends(load_categories)):
+    return templates.TemplateResponse("upload.html", {"request": request, "prompts": prompts})
+
+
+@app.get("/prompts", response_class=HTMLResponse)
+def read_root(request: Request,
+              prompts: list = Depends(load_categories)):
+    return templates.TemplateResponse("prompts.html", {"request": request,
+                                                     "prompts": prompts})

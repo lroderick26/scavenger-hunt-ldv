@@ -10,11 +10,11 @@ import email
 from googleapiclient import errors
 
 # Set working path
-if os.getcwd() == 'C:\\Users\\Laurie\\Documents\\GitHub\\lvd\\scripts':
-    print("Working directory already set to gmail_read")
+if os.getcwd() == 'C:\\Users\\Laurie\\Documents\\GitHub\\lesbian-visibility-day\\scripts':
+    print("Working directory already set to lesbian-visibility-day/scripts")
 else:
-    os.chdir('C:\\Users\\Laurie\\Documents\\GitHub\\gmail_read')
-    print("Working directory now set to gmail_read")
+    os.chdir('C:\\Users\\Laurie\\Documents\\GitHub\\lesbian-visibility-day\\scripts')
+    print("Working directory now set to lesbian-visibility-day/scripts")
 
 def GetAttachments(service, user_id, msg_id, store_dir, already_in):
   """Get and store attachment from Message with given id.
@@ -27,6 +27,7 @@ def GetAttachments(service, user_id, msg_id, store_dir, already_in):
   """
   try:
     message = service.users().messages().get(userId=user_id, id=msg_id).execute()
+    print(str(message['payload']['parts']))
     for part in message['payload']['parts']:
         print(part['filename'])
         filename = None
@@ -142,19 +143,21 @@ def ListMessagesWithLabels(service, user_id, label_ids=[]):
 
 
 def get_creds():
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
+    if os.path.exists('env/token.pickle'):
+        with open('env/token.pickle', 'rb') as token:
             creds = pickle.load(token, encoding='latin1')
+    else:
+        creds = None
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                'C:/Users/Laurie/Documents/credentials.json', SCOPES)
+                'C:/Users/Laurie/Documents/GitHub/lesbian-visibility-day/app/creds/client_secret_640904640852-fgc9ki1g1usd6vc5v9mj7lqqkhi35i6u.apps.googleusercontent.com.json', SCOPES)
             creds = flow.run_local_server(port=0)
             # Save the credentials for the next run
-            with open('token.pickle', 'wb') as token:
+            with open('env/token.pickle', 'wb') as token:
                 pickle.dump(creds, token)
     return creds
 
@@ -179,8 +182,8 @@ service = build('gmail', 'v1', credentials=creds)
 
 def main():
     user_id = 'me'
-    queries = ['has:attachment subject:"Lesbian Visibility Day"']
-    attachment_dir = 'C:/Users/Laurie/Documents/LVD/'
+    queries = ['has:attachment filename:png filename:jpg filename:jpeg filename:gif subject:"Lesbian Visibility Day"']
+    attachment_dir = 'C:/Users/Laurie/Documents/LVD'
 
     already_in = []
     # get the current files in there so we don't create the same ones again
@@ -194,16 +197,7 @@ def main():
             msg_id = item['id']
             GetAttachments(service, user_id, msg_id, attachment_dir, already_in)
 
-# Call the Gmail API
-# results = service.users().labels().list(userId='me').execute()
-# labels = results.get('labels', [])
 
-# if not labels:
-#     print('No labels found.')
-# else:
-#     print('Labels:')
-#     for label in labels:
-#         print(label['name'])
 
 if __name__ == '__main__':
     main()
