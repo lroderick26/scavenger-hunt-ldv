@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Upload Photo{% endblock %}
+{% block content %}
+
+<script type="text/javascript">
+    function previewFile() {
+        const preview = document.querySelector('img');
+        var file = document.getElementById('fileInput').files[0];
+        const reader = new FileReader();
+        reader.addEventListener("load", function() {
+            preview.src = reader.result; // show image in <img> tag
+        }, false);
+        if (file) {
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function renameFile(originalFile, newName) {
+        return new File([originalFile], newName, {
+            type: originalFile.type,
+            lastModified: originalFile.lastModified,
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        $('.alert').alert()
+      })
+
+    function uploadFile() {
+        var inputEmail = document.getElementById('inputEmail').value;
+        var inputPrompt = document.getElementById('inputPrompt').value;
+        if (!inputEmail || !inputPrompt) {
+            document.getElementById("serverMsgError").innerHTML = "Please ensure your email and prompt are both filled in.";
+             $('#serverMsgError').show();
+            console.error("Please ensure your email and prompt are both filled in.");
+        } else {
+            var file = document.getElementById('fileInput').files[0];
+            var ogFilename = document.getElementById('fileInput').files.item(0).name;
+            var email = document.getElementById('inputEmail').value;
+            var prompt = document.getElementById('inputPrompt').value;
+            var filename = prompt.split("-")[0] + "_" + email.split("@")[0] + "_" + ogFilename;
+            console.log(filename);
+            var newFile = renameFile(file, filename);
+            if (newFile) {
+                var formData = new FormData();
+                formData.append('file', newFile);
+                fetch('/upload', {
+                        method: 'POST',
+                        body: formData,
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.message.includes("Successfully uploaded")) {
+                            document.getElementById("serverMsg").innerHTML = data.message;
+                            $('#serverMsg').show();
+                            }
+                        else {
+                            document.getElementById("serverMsgError").innerHTML = data.message;
+                             $('#serverMsgError').show();
+                             }
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+            }
+        }
+    }
+
+    (function(window, document, undefined) {
+
+      // code that should be taken care of right away
+
+      window.onload = init;
+
+      function init(){
+        const optionParam = new URLSearchParams(window.location.search).get('option');
+        console.log(optionParam);
+        // const optionParam = "13"; // (PS: Use the above one instead, this is for demo)
+        const sel = document.getElementById("inputPrompt");
+        if (sel) {
+            sel.value = optionParam;
+            }
+      }
+
+    })(window, document, undefined);
+
+</script>
+<div class="container">
+<form>
+    <label for="inputEmail">Email address</label>
+    <input type="email" class="form-control" id="inputEmail" placeholder="name@example.com" required>
+    <label for="inputPrompt">Prompt select</label>
+    <select class="form-control" id="inputPrompt" required>
+      {% for item in prompts %}
+        <option value="{{ item['id'] }}">{{ item['id'] + '-' + item['short_prompt']}}</option>
+        {% endfor %}
+    </select>
+    <br>
+    <br>
+    <label for="fileInput">Example file input</label>
+    <input type="file" id="fileInput" onchange="previewFile()">
+    <br>
+    <input type="button" value="Upload Image" onclick="uploadFile()">
+    <caption>Be sure your photo/screenshot is of the format: png, jpg/jpeg, gif, webp</caption>
+    <div class="alert alert-success alert-dismissible" style="display:none;" role="alert" id="serverMsg">
+        <p></p>
+    </div>
+    <div class="alert alert-danger alert-dismissible" style="display:none;" role="alert" id="serverMsgError">
+        <p></p>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+    </div>
+    <br>
+    <img height="200">
+    <img src="" height="200" alt="Image preview...">
+</form>
+</div>
+
+ {% endblock %}
