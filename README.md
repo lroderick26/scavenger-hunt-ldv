@@ -20,6 +20,43 @@ Once up and running:
 * Wait for a confirmation that the photo has been successfully uploaded, then head to the Home page to see it live.
 
 
+## Technologies
+
+### Google Cloud
+<br>
+<img src="https://1000logos.net/wp-content/uploads/2020/05/Google-cloud-logo.jpg" width="300">
+<br>
+
+* Sign up for an [acccount](https://cloud.google.com/) <br>
+* Download the [Google Cloud CLI](https://cloud.google.com/sdk)
+
+### Python
+<br>
+<img src="https://cdn.icon-icons.com/icons2/2699/PNG/512/python_vertical_logo_icon_168039.png" width="200">
+<br>
+
+### FastAPI
+<br>
+<img src="https://fastapi.tiangolo.com/img/logo-margin/logo-teal.png" width="300">
+<br>
+
+* Learn more about [FastAPI here](https://fastapi.tiangolo.com/lo/) 
+
+### Jinja
+<br>
+<img src="https://jinja.palletsprojects.com/en/3.1.x/_images/jinja-logo.png" width="300">
+<br>
+
+* Learn more about [Jinja templating here](https://jinja.palletsprojects.com/en/3.1.x/) 
+
+### Bootstrap
+<br>
+<img src="https://getbootstrap.com/docs/5.3/assets/brand/bootstrap-logo-shadow.png" width="300">
+<br>
+
+* Learn more about [Bootstrap here](https://getbootstrap.com/) 
+
+
 ## Setup
 
 For more information in general, take a look at https://medium.com/analytics-vidhya/deploying-fastapi-application-in-google-app-engine-in-standard-environment-dc061d3277a or https://github.com/kamalgill/cloud-starterkit-fastapi-appengine
