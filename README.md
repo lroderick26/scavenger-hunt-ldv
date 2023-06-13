@@ -85,7 +85,7 @@ gcloud app browse
 The current site to view this at is https://lgbt-tv-data.uc.r.appspot.com/ (note: may be brought down in the future due to cost)
 
 Here's the home page:
-![Home Page](./photos/ldv1.PNG "Home Page")
+![Home Page](./photos/ldv1.jpg "Home Page")
 
 Here's the prompts page:
 ![Prompts](./photos/ldv2.PNG "Prompts Page")
