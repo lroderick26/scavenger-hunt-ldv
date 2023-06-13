@@ -93,7 +93,7 @@ Here's the prompts page:
 Here's the upload page:
 ![Upload Page](./photos/ldv3.PNG "Upload Page")
 
-Here's the upload page:
+Here's the tips and how to page:
 ![Tips Page](./photos/ldv4.PNG "Tips Page")
 
 
